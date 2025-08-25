@@ -91,7 +91,8 @@ public class CommentPath {
             value /= charsetLength;
         }
 
-        // 상위 댓글의 경로 정보 + lastChunk에서 1 더한 값
+        // 상위 댓글의 경로 정보 + lastChunk
+        // 에서 1 더한 값
         return path.substring(0, path.length() - DEPTH_CHUNK_SIZE) + result;
     }
 
