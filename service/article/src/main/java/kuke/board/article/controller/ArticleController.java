@@ -44,12 +44,17 @@ public class ArticleController {
     }
 
     @PutMapping("/v1/articles/{articleId}")
-    public ArticleResponse update(@PathVariable Long articleId, @RequestBody ArticleUpdateRequest request) {
+    public ArticleResponse update(@PathVariable(name = "articleId") Long articleId, @RequestBody ArticleUpdateRequest request) {
         return articleService.update(articleId, request);
     }
 
     @DeleteMapping("/v1/articles/{articleId}")
-    public void delete(@PathVariable Long articleId) {
+    public void delete(@PathVariable(name = "articleId") Long articleId) {
          articleService.delete(articleId);
+    }
+
+    @GetMapping("/v1/articles/boards/{boardId}/count")
+    public Long count(@PathVariable(name = "boardId") Long boardId) {
+        return articleService.count(boardId);
     }
 }
