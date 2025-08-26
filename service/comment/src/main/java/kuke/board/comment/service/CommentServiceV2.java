@@ -1,8 +1,10 @@
 package kuke.board.comment.service;
 
+import kuke.board.comment.entity.ArticleCommentCount;
 import kuke.board.comment.entity.Comment;
 import kuke.board.comment.entity.CommentPath;
 import kuke.board.comment.entity.CommentV2;
+import kuke.board.comment.repository.ArticleCommentCountRepository;
 import kuke.board.comment.repository.CommentRepositoryV2;
 import kuke.board.comment.service.request.CommentCreateRequestV2;
 import kuke.board.comment.service.response.CommentPageResponse;
@@ -22,6 +24,7 @@ import static java.util.function.Predicate.not;
 public class CommentServiceV2 {
     private final Snowflake snowflake = new Snowflake();
     private final CommentRepositoryV2 commentRepositoryV2;
+    private final ArticleCommentCountRepository articleCommentCountRepository;
 
     @Transactional
     public CommentResponse create(CommentCreateRequestV2 request) {
@@ -41,6 +44,13 @@ public class CommentServiceV2 {
                         )
                 )
         );
+
+        int result = articleCommentCountRepository.increase(request.getArticleId());
+        if (result == 0) {
+            articleCommentCountRepository.save(
+                    ArticleCommentCount.init(comment.getArticleId(), 1L)
+            );
+        }
 
         return CommentResponse.from(comment);
     }
@@ -79,6 +89,7 @@ public class CommentServiceV2 {
 
     private void delete(CommentV2 comment) {
         commentRepositoryV2.delete(comment); // 실제 삭제
+        articleCommentCountRepository.decrease(comment.getArticleId());
 
         if (!comment.isRoot()) {
             commentRepositoryV2.findByPath(comment.getCommentPath().getParentPath())
@@ -103,6 +114,12 @@ public class CommentServiceV2 {
                 commentRepositoryV2.findAllInfiniteScroll(articleId, lastPath, pageSize);
 
         return comments.stream().map(CommentResponse::from).collect(Collectors.toList());
+    }
+
+    public Long count(Long articleId) {
+        return articleCommentCountRepository.findById(articleId)
+                .map(ArticleCommentCount::getCommentCount)
+                .orElse(0L);
     }
 
 }
