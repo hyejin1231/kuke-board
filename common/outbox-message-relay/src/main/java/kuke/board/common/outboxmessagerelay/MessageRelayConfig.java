@@ -14,7 +14,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -34,7 +33,6 @@ public class MessageRelayConfig {
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configProps.put(ProducerConfig.ACKS_CONFIG, "all");
-
         return new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(configProps));
     }
 
@@ -48,7 +46,7 @@ public class MessageRelayConfig {
         executor.setCorePoolSize(20);
         executor.setMaxPoolSize(50);
         executor.setQueueCapacity(100);
-        executor.setThreadNamePrefix("mr-publish-event-");
+        executor.setThreadNamePrefix("mr-pub-event-");
         return executor;
     }
 
@@ -58,6 +56,6 @@ public class MessageRelayConfig {
      */
     @Bean
     public Executor messageRelayPublishPendingEventExecutor() {
-        return Executors.newSingleThreadExecutor();
+        return Executors.newSingleThreadScheduledExecutor();
     }
 }

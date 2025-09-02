@@ -1,5 +1,9 @@
 package kuke.board.like.service;
 
+import kuke.board.common.event.EventType;
+import kuke.board.common.event.payload.ArticleLikedEventPayload;
+import kuke.board.common.event.payload.ArticleUnLikedEventPayload;
+import kuke.board.common.outboxmessagerelay.OutboxEventPublisher;
 import kuke.board.common.snowflake.Snowflake;
 import kuke.board.like.entity.ArticleLike;
 import kuke.board.like.entity.ArticleLikeCount;
@@ -17,6 +21,7 @@ public class ArticleLikeService {
     private final Snowflake snowflake = new Snowflake();
     private final ArticleLikeRepository articleLikeRepository;
     private final ArticleLikeCountRepository articleLikeCountRepository;
+    private final OutboxEventPublisher outboxEventPublisher;
 
     public ArticleLikeResponse read(Long articleId, Long userId) {
         return articleLikeRepository.findByArticleIdAndUserId(articleId, userId)
@@ -27,7 +32,7 @@ public class ArticleLikeService {
     // 비관적 락 방법 1 : update
     @Transactional
     public void likePessimisticLock1(Long articleId, Long userId) {
-        articleLikeRepository.save(
+        ArticleLike articleLike = articleLikeRepository.save(
                 ArticleLike.create(
                         snowflake.nextId(), articleId, userId
                 )
@@ -41,15 +46,39 @@ public class ArticleLikeService {
                     ArticleLikeCount.init(articleId, userId)
             );
         }
+
+        outboxEventPublisher.publish(
+                EventType.ARTICLE_LIKED,
+                ArticleLikedEventPayload.builder()
+                        .articleLikeId(articleLike.getArticleId())
+                        .articleId(articleLike.getArticleId())
+                        .userId(articleLike.getUserId())
+                        .createdAt(articleLike.getCreatedAt())
+                        .articleLikeCount(count(articleLike.getArticleId()))
+                        .build()
+                , articleLike.getArticleId()
+        );
     }
 
     // 비관적 락 방법 1 : update
     @Transactional
     public void unlikePessimisticLock1(Long articleId, Long userId) {
         articleLikeRepository.findByArticleIdAndUserId(articleId, userId)
-                .ifPresent(entity -> {
-                            articleLikeRepository.delete(entity);
+                .ifPresent(articleLike -> {
+                            articleLikeRepository.delete(articleLike);
                             articleLikeCountRepository.decrease(articleId);
+
+                    outboxEventPublisher.publish(
+                            EventType.ARTICLE_UNLIKED,
+                            ArticleUnLikedEventPayload.builder()
+                                    .articleLikeId(articleLike.getArticleId())
+                                    .articleId(articleLike.getArticleId())
+                                    .userId(articleLike.getUserId())
+                                    .createdAt(articleLike.getCreatedAt())
+                                    .articleLikeCount(count(articleLike.getArticleId()))
+                                    .build()
+                            , articleLike.getArticleId()
+                    );
                         }
                 );
     }
