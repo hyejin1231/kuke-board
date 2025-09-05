@@ -71,7 +71,6 @@ public class ArticleReadService {
         );
     }
 
-
     private List<ArticleReadResponse> readAll(List<Long> articleIds) {
        Map<Long, ArticleQueryModel> articleQueryModelMap =  articleQueryModelRepository.readAll(articleIds);
 
