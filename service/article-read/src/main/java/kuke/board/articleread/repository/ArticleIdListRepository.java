@@ -22,7 +22,7 @@ public class ArticleIdListRepository {
     /**
      *
      * @param boardId : key
-     * @param articleId
+     * @param articleId : score
      * @param limit : 1000개 저장
      */
     public void add(Long boardId, Long articleId, Long limit) {
