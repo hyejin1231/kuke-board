@@ -1,6 +1,7 @@
 package kuke.board.articleread.client;
 
 import jakarta.annotation.PostConstruct;
+import kuke.board.articleread.cache.OptimizedCacheable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,7 +26,8 @@ public class ViewClient {
     // 레디스에서 데이터를 조회해본다.
     // 레디스에 데이터가 없었다면, count 메서드 내부 로직이 호출되면서, viewService로 원본 데이터 요청, 그리고 레디스에 데이터 넣고 응답
     // 레디스에 데이터가 있었다면, 그 데이터를 그대로 바로 반환함
-    @Cacheable(key = "#p0", value = "articleViewCount")
+//    @Cacheable(key = "#p0", value = "articleViewCount")
+    @OptimizedCacheable(type = "articleViewCount", ttlSeconds = 1)
     public long count(Long articleId) {
         log.info("[ViewClient.count] articleId={}", articleId);
         try {
